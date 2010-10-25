@@ -157,16 +157,34 @@ int axel_open( axel_t *axel )
 	}
 	else if( ( fd = open( buffer, O_RDONLY ) ) != -1 )
 	{
+		int old_format = 0;
+		off_t stsize = lseek(fd,0,SEEK_END);
+		lseek(fd,0,SEEK_SET);
+
 		read( fd, &axel->conf->num_connections, sizeof( axel->conf->num_connections ) );
-		
+
+		if(stsize < sizeof( axel->conf->num_connections ) + sizeof( axel->bytes_done )
+			+ 2 * axel->conf->num_connections * sizeof( axel->conn[i].currentbyte ))
+		{
+#ifdef DEBUG
+			printf( "State file has old format.\n" );
+#endif
+			old_format = 1;
+		}
+
 		axel->conn = realloc( axel->conn, sizeof( conn_t ) * axel->conf->num_connections );
 		memset( axel->conn + 1, 0, sizeof( conn_t ) * ( axel->conf->num_connections - 1 ) );
 
-		axel_divide( axel );
+		if(old_format)
+			axel_divide( axel );
 		
 		read( fd, &axel->bytes_done, sizeof( axel->bytes_done ) );
 		for( i = 0; i < axel->conf->num_connections; i ++ )
+		{
 			read( fd, &axel->conn[i].currentbyte, sizeof( axel->conn[i].currentbyte ) );
+			if(!old_format)
+				read( fd, &axel->conn[i].lastbyte, sizeof( axel->conn[i].lastbyte ) );
+		}
 
 		axel_message( axel, _("State file found: %lld bytes downloaded, %lld to go."),
 			axel->bytes_done, axel->size - axel->bytes_done );
@@ -260,6 +278,35 @@ void axel_start( axel_t *axel )
 	axel->ready = 0;
 }
 
+void reactivate_thread(axel_t *axel, int thread)
+{
+	long long int max_remaining = 0,remaining;
+	int j, idx = -1;
+
+	if(axel->conn[thread].enabled || axel->conn[thread].currentbyte < axel->conn[thread].lastbyte)
+		return;
+	/* find some more work to do */
+	for( j = 0; j < axel->conf->num_connections; j ++ )
+	{
+		remaining = axel->conn[j].lastbyte - axel->conn[j].currentbyte + 1;
+		if(remaining > max_remaining)
+		{
+			max_remaining = remaining;
+			idx = j;
+		}
+	}
+	/*do not reactivate for less than 100KB */
+	if(max_remaining >= 100 * 1024 && idx != -1)
+	{
+#ifdef DEBUG
+		printf("\nReactivate thread %d\n",thread);
+#endif
+		axel->conn[thread].lastbyte = axel->conn[idx].lastbyte;
+		axel->conn[idx].lastbyte = axel->conn[idx].currentbyte + max_remaining/2;
+		axel->conn[thread].currentbyte = axel->conn[idx].lastbyte + 1;
+	}
+}
+
 /* Main 'loop'								*/
 void axel_do( axel_t *axel )
 {
@@ -341,6 +388,8 @@ void axel_do( axel_t *axel )
 			}
 			axel->conn[i].enabled = 0;
 			conn_disconnect( &axel->conn[i] );
+
+			reactivate_thread(axel,i);
 			continue;
 		}
 		/* remaining == Bytes to go					*/
@@ -367,6 +416,8 @@ void axel_do( axel_t *axel )
 		}
 		axel->conn[i].currentbyte += size;
 		axel->bytes_done += size;
+		if( remaining == size )
+			reactivate_thread(axel,i);
 	}
 	else
 	{
@@ -516,6 +567,7 @@ void save_state( axel_t *axel )
 	for( i = 0; i < axel->conf->num_connections; i ++ )
 	{
 		write( fd, &axel->conn[i].currentbyte, sizeof( axel->conn[i].currentbyte ) );
+		write( fd, &axel->conn[i].lastbyte, sizeof( axel->conn[i].lastbyte ) );
 	}
 	close( fd );
 }
