@@ -28,6 +28,7 @@ typedef struct
 	char default_filename[MAX_STRING];
 	char http_proxy[MAX_STRING];
 	char no_proxy[MAX_STRING];
+    int clobber;
 	int strip_cgi_parameters;
 	int save_state_interval;
 	int connection_timeout;

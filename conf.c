@@ -127,6 +127,7 @@ int conf_init( conf_t *conf )
 	strcpy( conf->default_filename, "default" );
 	*conf->http_proxy		= 0;
 	*conf->no_proxy			= 0;
+    conf->clobber            = 1;
 	conf->strip_cgi_parameters	= 1;
 	conf->save_state_interval	= 10;
 	conf->connection_timeout	= 45;
