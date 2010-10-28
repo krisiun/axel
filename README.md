@@ -24,24 +24,24 @@ Skip files that are already downloaded (don't clobber from `wget`).
 
 It is not a good idea to read cookies from sqlite file, since firefox does not write all cookies to the disk. Instead there is a flashgot extension for firefox that integrates it with various download managers. I plan to modify flashgot to include better support for axel.
 
- * [http://github.com/emiraga/flashgot](http://github.com/emiraga/flashgot)
+* [http://github.com/emiraga/flashgot](http://github.com/emiraga/flashgot)
 
- ## Planned branch: content-disposition
+## Planned branch: content-disposition
 
- Recognize `Content-disposition` in HTTP headers.
+Recognize `Content-disposition` in HTTP headers.
 
- ## Planned branch: multi-url-arguments
+## Planned branch: multi-url-arguments
 
- Give multiple files (not mirrors) on command line.
+Give multiple files (not mirrors) on command line.
 
- # Extra notes
+# Extra notes
 
- I test my code only using HTTP connections on linux. Sorry, for potential incompatibilities, all fixes are welcome.
+I test my code only using HTTP connections on linux. Sorry, for potential incompatibilities, all fixes are welcome.
 
- Original README and CHANGELOG were not modified.
+Original README and CHANGELOG were not modified.
 
- Also, license from axel is unchanged.
+Also, license from axel is unchanged.
 
- ## Contact
+## Contact
 
- Here on github, or email: [emiraga@gmail.com](mailto:emiraga@gmail.com)
+Here on github, or email: [emiraga@gmail.com](mailto:emiraga@gmail.com)
