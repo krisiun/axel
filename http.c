@@ -209,7 +209,7 @@ long long int http_size( http_t *conn, char *filename )
 	{
 		for( ;*i && *i != '\n'; i++)
 		{
-			if(!strncmp("filename=", i, 9))
+			if(!strncasecmp("filename=", i, 9))
 			{
 				http_string(i+9, filename);
 				break;
