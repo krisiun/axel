@@ -237,7 +237,7 @@ void reactivate_connection(axel_t *axel, int thread)
 	long long int max_remaining = 0,remaining;
 	int j, idx = -1;
 
-	if(axel->conn[thread].enabled || axel->conn[thread].currentbyte < axel->conn[thread].lastbyte)
+	if(axel->conn[thread].enabled || axel->conn[thread].currentbyte <= axel->conn[thread].lastbyte)
 		return;
 	/* find some more work to do */
 	for( j = 0; j < axel->conf->num_connections; j ++ )
@@ -282,7 +282,7 @@ void axel_start( axel_t *axel )
 		axel_message( axel, _("Starting download") );
 
 	for( i = 0; i < axel->conf->num_connections; i ++ )
-	if( axel->conn[i].currentbyte >= axel->conn[i].lastbyte )
+	if( axel->conn[i].currentbyte > axel->conn[i].lastbyte )
 	{
 		reactivate_connection(axel, i);
 	}
