@@ -39,6 +39,7 @@ typedef struct
 	char file[MAX_STRING];
 	char user[MAX_STRING];
 	char pass[MAX_STRING];
+	char attachment[MAX_STRING];
 	
 	ftp_t ftp[1];
 	http_t http[1];

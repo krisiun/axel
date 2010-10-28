@@ -177,6 +177,7 @@ int conn_init( conn_t *conn )
 	char *proxy = conn->conf->http_proxy, *host = conn->conf->no_proxy;
 	int i;
 	
+	*conn->attachment = 0;
 	if( *conn->conf->http_proxy == 0 )
 	{
 		proxy = NULL;
@@ -350,7 +351,7 @@ int conn_info( conn_t *conn )
 			return( 0 );
 		}
 		
-		conn->size = http_size( conn->http );
+		conn->size = http_size( conn->http, conn->attachment );
 		if( conn->http->status == 206 && conn->size >= 0 )
 		{
 			conn->supported = 1;
