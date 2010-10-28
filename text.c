@@ -63,6 +63,20 @@ static struct option axel_options[] =
 /* For returning string values from functions				*/
 static char string[MAX_STRING];
 
+int console_width = 80;
+
+void console_resized(int signal)
+{
+#ifdef TIOCGSIZE
+	struct ttysize ts;
+	ioctl(STDIN_FILENO, TIOCGSIZE, &ts);
+	console_width = ts.ts_cols;
+#elif defined(TIOCGWINSZ)
+	struct winsize ts;
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+	console_width = ts.ws_col;
+#endif /* TIOCGSIZE */
+}
 
 int main( int argc, char *argv[] )
 {
@@ -79,6 +93,8 @@ int main( int argc, char *argv[] )
 	bindtextdomain( PACKAGE, LOCALE );
 	textdomain( PACKAGE );
 #endif
+
+	console_resized(0);
 	
 	if( !conf_init( conf ) )
 	{
@@ -346,6 +362,7 @@ int main( int argc, char *argv[] )
 	/* Install save_state signal handler for resuming support	*/
 	signal( SIGINT, stop );
 	signal( SIGTERM, stop );
+	signal( SIGWINCH, console_resized );
 	
 	while( !axel->ready && run )
 	{
@@ -399,7 +416,7 @@ int main( int argc, char *argv[] )
 			{
 				/* clreol-simulation */
 				putchar( '\r' );
-				for( i = 0; i < 79; i++ ) /* linewidth known? */
+				for( i = 0; i < console_width; i++ )
 					putchar( ' ' );
 				putchar( '\r' );
 			}
@@ -502,12 +519,13 @@ static void print_alternate_output(axel_t *axel)
 	long long int total=axel->size;
 	int i,j=0;
 	double now = gettime();
+	int width = console_width - 30;
 	
 	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
 		
 	for(i=0;i<axel->conf->num_connections;i++)
 	{
-		for(;j<((double)axel->conn[i].currentbyte/(total+1)*50)-1;j++)
+		for(;j<((double)axel->conn[i].currentbyte/(total+1)*width)-1;j++)
 			putchar('.');
 
 		if(axel->conn[i].currentbyte<axel->conn[i].lastbyte)
@@ -521,7 +539,7 @@ static void print_alternate_output(axel_t *axel)
 
 		j++;
 		
-		for(;j<((double)axel->conn[i].lastbyte/(total+1)*50);j++)
+		for(;j<((double)axel->conn[i].lastbyte/(total+1)*width);j++)
 			putchar(' ');
 	}
 	
@@ -550,16 +568,19 @@ static void print_alternate_output(axel_t *axel)
 	fflush( stdout );
 }
 
-static const char *unicode_blocks[9] = {
-	" ",
-	"\342\226\217",
+static const char *unicode_blocks[11] = {
+	" ", /*space*/
+	"\342\226\217",/*left 1/8 block*/
 	"\342\226\216",
 	"\342\226\215",
-	"\342\226\214", /*half block*/
+	"\342\226\214", /*left half block*/
 	"\342\226\213",
 	"\342\226\212",
 	"\342\226\211",
-	"\342\226\210" /*full block*/
+	"\342\226\210", /*full block*/
+	"\342\226\225", /*right 1/8 block*/
+	"\342\226\220"  /*right half block*/
+	/*Curse you unicode for providing only two right blocks!*/
 };
 
 static void print_unicode_output(axel_t *axel) 
@@ -569,9 +590,10 @@ static void print_unicode_output(axel_t *axel)
 	int i,j=0;
 	double now = gettime();
 	
-	int width = 50;
+	int width = console_width - 30;
 	long long int missing[width];
 	long long int blocksize[width];
+	char hasleft[width];
 	int pos = 0;
 	
 	if(total <= 8*width)
@@ -582,6 +604,7 @@ static void print_unicode_output(axel_t *axel)
 		long long int next = i*total/width;
 		blocksize[i-1] = next - pos;
 		missing[i-1] = 0;
+		hasleft[i-1] = 1;
 		pos = next;
 	}
 	
@@ -589,20 +612,33 @@ static void print_unicode_output(axel_t *axel)
 	
 	for(i=0;i<axel->conf->num_connections;i++)
 	{
-		int k1 = axel->conn[i].currentbyte * width / total;
-		int k2 = axel->conn[i].lastbyte * width / total;
-		for(j=k1; j<=k2; j++)
+		int b1 = axel->conn[i].currentbyte * width / total;
+		int b2 = axel->conn[i].lastbyte * width / total;
+
+		for(j=b1; j<=b2; j++)
 			missing[j] = blocksize[j];
-		missing[k1] -= axel->conn[i].currentbyte - k1 * total / width;
-		missing[k2] -= (k2+1) * total / width - 1 - axel->conn[i].lastbyte;
+		
+		missing[b1] -= axel->conn[i].currentbyte - b1 * total / width;
+		missing[b2] -= (b2+1) * total / width - 1 - axel->conn[i].lastbyte;
+		if(b1 < b2)
+		{
+			hasleft[b2] = 0;
+		}
 	}
 
 	for(i=0; i<width; i++)
 	{
 		long long int complete = blocksize[i] - missing[i];
-		printf("%s", unicode_blocks[(7*complete + blocksize[i]-2)/(blocksize[i]-1)]);
+		if(hasleft[i] || complete == blocksize[i] || complete == 0)
+		{
+			printf("%s", unicode_blocks[(7*complete + blocksize[i]-2)/(blocksize[i]-1)]);
+		}
+		else
+		{
+			printf("%s", unicode_blocks[ 9 + (complete*2 >= blocksize[i]) ]);
+		}
 	}
-	
+
 	if(axel->bytes_per_second > 1048576)
 		printf( "] [%6.1fMB/s]", (double) axel->bytes_per_second / (1024*1024) );
 	else if(axel->bytes_per_second > 1024)
