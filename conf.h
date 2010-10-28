@@ -37,6 +37,7 @@ typedef struct
 	int max_speed;
 	int verbose;
 	int alternate_output;
+	int unicode_output;
 	
 	if_t *interfaces;
 	

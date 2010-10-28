@@ -30,6 +30,7 @@ static char *size_human( long long int value );
 static char *time_human( int value );
 static void print_commas( long long int bytes_done );
 static void print_alternate_output( axel_t *axel );
+static void print_unicode_output( axel_t *axel );
 static void print_help();
 static void print_version();
 static void print_messages( axel_t *axel );
@@ -52,6 +53,7 @@ static struct option axel_options[] =
 	{ "help",		0,	NULL,	'h' },
 	{ "version",		0,	NULL,	'V' },
 	{ "alternate",		0,	NULL,	'a' },
+	{ "unicode",		0,	NULL,	'u' },
 	{ "header",		1,	NULL,	'H' },
 	{ "user-agent",		1,	NULL,	'U' },
 	{ NULL,			0,	NULL,	0 }
@@ -90,7 +92,7 @@ int main( int argc, char *argv[] )
 	{
 		int option;
 		
-		option = getopt_long( argc, argv, "s:n:o:S::NqvhVaH:U:", axel_options, NULL );
+		option = getopt_long( argc, argv, "s:n:o:S::NqvhVauH:U:", axel_options, NULL );
 		if( option == -1 )
 			break;
 		
@@ -129,6 +131,10 @@ int main( int argc, char *argv[] )
 			}
 			break;
 		case 'a':
+			conf->alternate_output = 1;
+			break;
+		case 'u':
+			conf->unicode_output = 1;
 			conf->alternate_output = 1;
 			break;
 		case 'N':
@@ -351,7 +357,12 @@ int main( int argc, char *argv[] )
 		if( conf->alternate_output )
 		{			
 			if( !axel->message && prev != axel->bytes_done )
-				print_alternate_output( axel );
+			{
+				if(conf->unicode_output)
+					print_unicode_output( axel );
+				else
+					print_alternate_output( axel );
+			}
 		}
 		else
 		{
@@ -402,7 +413,12 @@ int main( int argc, char *argv[] )
 				if(conf->alternate_output!=1)
 					print_commas( axel->bytes_done );
 				else
-					print_alternate_output(axel);
+				{
+					if(conf->unicode_output)
+						print_unicode_output(axel);
+					else
+						print_alternate_output(axel);
+				}
 			}
 		}
 		else if( axel->ready )
@@ -534,6 +550,57 @@ static void print_alternate_output(axel_t *axel)
 	fflush( stdout );
 }
 
+static char *unicode_blocks[9] = {
+	" ",
+	"\342\226\217",
+	"\342\226\216",
+	"\342\226\215",
+	"\342\226\214", /*half*/
+	"\342\226\213",
+	"\342\226\212",
+	"\342\226\211",
+	"\342\226\210" /*full*/
+};
+
+static void print_unicode_output(axel_t *axel) 
+{
+	long long int done=axel->bytes_done;
+	long long int total=axel->size;
+	int i,j=0;
+	double now = gettime();
+	int progress[50] = {0};
+	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
+
+	for(i=0;i<axel->conf->num_connections;i++)
+	{
+		printf("%d %d\n", (int)axel->conn[i].currentbyte, (int)axel->conn[i].lastbyte);
+	}
+	
+	if(axel->bytes_per_second > 1048576)
+		printf( "] [%6.1fMB/s]", (double) axel->bytes_per_second / (1024*1024) );
+	else if(axel->bytes_per_second > 1024)
+		printf( "] [%6.1fKB/s]", (double) axel->bytes_per_second / 1024 );
+	else
+		printf( "] [%6.1fB/s]", (double) axel->bytes_per_second );
+	
+	if(done<total)
+	{
+		int seconds,minutes,hours,days;
+		seconds=axel->finish_time - now;
+		minutes=seconds/60;seconds-=minutes*60;
+		hours=minutes/60;minutes-=hours*60;
+		days=hours/24;hours-=days*24;
+		if(days)
+			printf(" [%2dd%2d]",days,hours);
+		else if(hours)
+			printf(" [%2dh%02d]",hours,minutes);
+		else
+			printf(" [%02d:%02d]",minutes,seconds);
+	}
+	sleep(1);
+	fflush( stdout );
+}
+
 void print_help()
 {
 #ifdef NOGETOPTLONG
@@ -549,6 +616,7 @@ void print_help()
 		"-q\tLeave stdout alone\n"
 		"-v\tMore status information\n"
 		"-a\tAlternate progress indicator\n"
+		"-u\tUnicode progress indicator\n"
 		"-h\tThis information\n"
 		"-V\tVersion information\n"
 		"\n"
@@ -566,6 +634,7 @@ void print_help()
 		"--quiet\t\t\t-q\tLeave stdout alone\n"
 		"--verbose\t\t-v\tMore status information\n"
 		"--alternate\t\t-a\tAlternate progress indicator\n"
+		"--unicode\t\t-u\tUnicode progress indicator\n"
 		"--help\t\t\t-h\tThis information\n"
 		"--version\t\t-V\tVersion information\n"
 		"\n"
