@@ -136,7 +136,7 @@ int main( int argc, char *argv[] )
 			*conf->http_proxy = 0;
 			break;
 		case 'c':
-			conf->clobber = 0;
+			conf->no_clobber = 1;
 			break;
 		case 'h':
 			print_help();
@@ -282,7 +282,7 @@ int main( int argc, char *argv[] )
 		sprintf( string, "%s.st", fn );
 		if( access( fn, F_OK ) == 0 ) if( access( string, F_OK ) != 0 )
 		{
-            if(conf->clobber)
+            if(!conf->no_clobber)
             {
                 fprintf( stderr, _("No state file, cannot resume!\n") );
                 return( 1 );
@@ -309,7 +309,7 @@ int main( int argc, char *argv[] )
 			sprintf( string, "%s.st", axel->filename );
 			if( access( axel->filename, F_OK ) == 0 )
 			{
-                if( !conf->clobber )
+                if( conf->no_clobber )
                 {
                     return( 0 );
                 }
