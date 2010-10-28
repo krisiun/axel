@@ -66,7 +66,7 @@
 /* Compiled-in settings							*/
 #define MAX_STRING		1024
 #define MAX_ADD_HEADERS	10
-#define MAX_REDIR		5
+#define MAX_REDIR		25
 #define AXEL_VERSION_STRING	"2.4"
 #define DEFAULT_USER_AGENT	"Axel " AXEL_VERSION_STRING " (" ARCH ")"
 
