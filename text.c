@@ -550,16 +550,16 @@ static void print_alternate_output(axel_t *axel)
 	fflush( stdout );
 }
 
-static char *unicode_blocks[9] = {
+static const char *unicode_blocks[9] = {
 	" ",
 	"\342\226\217",
 	"\342\226\216",
 	"\342\226\215",
-	"\342\226\214", /*half*/
+	"\342\226\214", /*half block*/
 	"\342\226\213",
 	"\342\226\212",
 	"\342\226\211",
-	"\342\226\210" /*full*/
+	"\342\226\210" /*full block*/
 };
 
 static void print_unicode_output(axel_t *axel) 
@@ -568,12 +568,39 @@ static void print_unicode_output(axel_t *axel)
 	long long int total=axel->size;
 	int i,j=0;
 	double now = gettime();
-	int progress[50] = {0};
-	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
+	
+	int width = 50;
+	long long int missing[width];
+	long long int blocksize[width];
+	int pos = 0;
+	
+	if(total <= 8*width)
+		return;
 
+	for(i=1;i<=width;i++)
+	{
+		long long int next = i*total/width;
+		blocksize[i-1] = next - pos;
+		missing[i-1] = 0;
+		pos = next;
+	}
+	
+	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
+	
 	for(i=0;i<axel->conf->num_connections;i++)
 	{
-		printf("%d %d\n", (int)axel->conn[i].currentbyte, (int)axel->conn[i].lastbyte);
+		int k1 = axel->conn[i].currentbyte * width / total;
+		int k2 = axel->conn[i].lastbyte * width / total;
+		for(j=k1; j<=k2; j++)
+			missing[j] = blocksize[j];
+		missing[k1] -= axel->conn[i].currentbyte - k1 * total / width;
+		missing[k2] -= (k2+1) * total / width - 1 - axel->conn[i].lastbyte;
+	}
+
+	for(i=0; i<width; i++)
+	{
+		long long int complete = blocksize[i] - missing[i];
+		printf("%s", unicode_blocks[(7*complete + blocksize[i]-2)/(blocksize[i]-1)]);
 	}
 	
 	if(axel->bytes_per_second > 1048576)
@@ -597,7 +624,7 @@ static void print_unicode_output(axel_t *axel)
 		else
 			printf(" [%02d:%02d]",minutes,seconds);
 	}
-	sleep(1);
+
 	fflush( stdout );
 }
 
