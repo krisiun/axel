@@ -48,6 +48,7 @@ static struct option axel_options[] =
 	{ "output",		1,	NULL,	'o' },
 	{ "search",		2,	NULL,	'S' },
 	{ "no-proxy",		0,	NULL,	'N' },
+	{ "no-clobber",		0,	NULL,	'c' },
 	{ "quiet",		0,	NULL,	'q' },
 	{ "verbose",		0,	NULL,	'v' },
 	{ "help",		0,	NULL,	'h' },
@@ -108,7 +109,7 @@ int main( int argc, char *argv[] )
 	{
 		int option;
 		
-		option = getopt_long( argc, argv, "s:n:o:S::NqvhVauH:U:", axel_options, NULL );
+		option = getopt_long( argc, argv, "s:n:o:S::NcqvhVauH:U:", axel_options, NULL );
 		if( option == -1 )
 			break;
 		
@@ -155,6 +156,9 @@ int main( int argc, char *argv[] )
 			break;
 		case 'N':
 			*conf->http_proxy = 0;
+			break;
+		case 'c':
+			conf->no_clobber = 1;
 			break;
 		case 'h':
 			print_help();
@@ -300,8 +304,15 @@ int main( int argc, char *argv[] )
 		sprintf( string, "%s.st", fn );
 		if( access( fn, F_OK ) == 0 ) if( access( string, F_OK ) != 0 )
 		{
-			fprintf( stderr, _("No state file, cannot resume!\n") );
-			return( 1 );
+            if(!conf->no_clobber)
+            {
+                fprintf( stderr, _("No state file, cannot resume!\n") );
+                return( 1 );
+            }
+            else
+            {
+                return( 0 );
+            }
 		}
 		if( access( string, F_OK ) == 0 ) if( access( fn, F_OK ) != 0 )
 		{
@@ -320,6 +331,10 @@ int main( int argc, char *argv[] )
 			sprintf( string, "%s.st", axel->filename );
 			if( access( axel->filename, F_OK ) == 0 )
 			{
+                if( conf->no_clobber )
+                {
+                    return( 0 );
+                }
 				if( axel->conn[0].supported )
 				{
 					if( access( string, F_OK ) == 0 )
@@ -674,6 +689,7 @@ void print_help()
 		"-H x\tAdd header string\n"
 		"-U x\tSet user agent\n"
 		"-N\tJust don't use any proxy server\n"
+		"-c\tSkip downloading if file already exists\n"
 		"-q\tLeave stdout alone\n"
 		"-v\tMore status information\n"
 		"-a\tAlternate progress indicator\n"
@@ -692,6 +708,7 @@ void print_help()
 		"--header=x\t\t-H x\tAdd header string\n"
 		"--user-agent=x\t\t-U x\tSet user agent\n"
 		"--no-proxy\t\t-N\tJust don't use any proxy server\n"
+		"--no-clobber\t\t-c\tSkip downloading if file already exists\n"
 		"--quiet\t\t\t-q\tLeave stdout alone\n"
 		"--verbose\t\t-v\tMore status information\n"
 		"--alternate\t\t-a\tAlternate progress indicator\n"

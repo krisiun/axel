@@ -80,6 +80,7 @@ int conf_loadfile( conf_t *conf, char *file )
 		get_config_string( default_filename );
 		get_config_string( http_proxy );
 		get_config_string( no_proxy );
+		get_config_number( no_clobber );
 		get_config_number( strip_cgi_parameters );
 		get_config_number( save_state_interval );
 		get_config_number( connection_timeout );
@@ -128,6 +129,7 @@ int conf_init( conf_t *conf )
 	strcpy( conf->default_filename, "default" );
 	*conf->http_proxy		= 0;
 	*conf->no_proxy			= 0;
+    conf->no_clobber        = 0;
 	conf->strip_cgi_parameters	= 1;
 	conf->save_state_interval	= 10;
 	conf->connection_timeout	= 45;
