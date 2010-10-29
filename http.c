@@ -203,7 +203,7 @@ long long int http_size( http_t *conn, char *filename )
 	if( ( i = http_header( conn, "Content-Length:" ) ) == NULL )
 		j = -2;
 	else
-		scanf( i, "%lld", &j );
+		sscanf( i, "%lld", &j );
 	
 	if( ( i = http_header( conn, "Content-Disposition:" ) ) != NULL )
 	{
