@@ -70,11 +70,13 @@ void console_resized(int signal)
 #ifdef TIOCGSIZE
 	struct ttysize ts;
 	ioctl(STDIN_FILENO, TIOCGSIZE, &ts);
-	console_width = ts.ts_cols;
+	if(ts.ts_cols > 1)
+		console_width = ts.ts_cols;
 #elif defined(TIOCGWINSZ)
 	struct winsize ts;
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
-	console_width = ts.ws_col;
+	if(ts.ws_col > 1)
+		console_width = ts.ws_col;
 #endif /* TIOCGSIZE */
 }
 
