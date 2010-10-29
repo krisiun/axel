@@ -195,16 +195,44 @@ char *http_header( http_t *conn, char *header )
 	return( NULL );
 }
 
-long long int http_size( http_t *conn )
+long long int http_size( http_t *conn, char *filename )
 {
 	char *i;
 	long long int j;
 	
 	if( ( i = http_header( conn, "Content-Length:" ) ) == NULL )
-		return( -2 );
+		j = -2;
+	else
+		scanf( i, "%lld", &j );
 	
-	sscanf( i, "%lld", &j );
+	if( ( i = http_header( conn, "Content-Disposition:" ) ) != NULL )
+	{
+		for( ;*i && *i != '\n'; i++)
+		{
+			if(!strncasecmp("filename=", i, 9))
+			{
+				http_string(i+9, filename);
+				break;
+			}
+		}
+	}
 	return( j );
+}
+
+/* copy a value of http string */
+void http_string(char *in, char *out)
+{
+	if(*in == '"')
+	{
+		strncpy(out, in+1, MAX_STRING);
+		for( ;*out && *out != '"' && *out != '\r' && *out != '\n'; out++);
+	}
+	else
+	{
+		strncpy(out, in, MAX_STRING);
+		for( ;*out && !isspace(*out) && *out != ';'; out++);
+	}
+	*out = 0;
 }
 
 /* Decode%20a%20file%20name						*/

@@ -96,13 +96,6 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 	axel->conn[0].local_if = axel->conf->interfaces->text;
 	axel->conf->interfaces = axel->conf->interfaces->next;
 	
-	strncpy( axel->filename, axel->conn[0].file, MAX_STRING );
-	http_decode( axel->filename );
-	if( *axel->filename == 0 )	/* Index page == no fn		*/
-		strncpy( axel->filename, axel->conf->default_filename, MAX_STRING );
-	if( ( s = strchr( axel->filename, '?' ) ) != NULL && axel->conf->strip_cgi_parameters )
-		*s = 0;		/* Get rid of CGI parameters		*/
-	
 	if( !conn_init( &axel->conn[0] ) )
 	{
 		axel_message( axel, axel->conn[0].message );
@@ -118,6 +111,15 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 		axel->ready = -1;
 		return( axel );
 	}
+	
+	if(*axel->conn[0].attachment)
+		strncpy( axel->filename, axel->conn[0].attachment, MAX_STRING );
+	else
+		strncpy( axel->filename, axel->conn[0].file, MAX_STRING );
+	http_decode( axel->filename );
+	if( ( s = strchr( axel->filename, '?' ) ) != NULL && axel->conf->strip_cgi_parameters )
+		*s = 0;		/* Get rid of CGI parameters		*/
+	
 	s = conn_url( axel->conn );
 	strncpy( axel->url->text, s, MAX_STRING );
 	if( ( axel->size = axel->conn[0].size ) != INT_MAX )
@@ -130,6 +132,16 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 	if( strchr( axel->filename, '*' ) || strchr( axel->filename, '?' ) )
 		strncpy( axel->filename, axel->conn[0].file, MAX_STRING );
 	
+	for(i=0; axel->filename[i]; i++)
+	{
+		if(axel->filename[i] == '/'
+				|| axel->filename[i] == '\\'
+				|| axel->filename[i] == ':')
+			axel->filename[i] = '_';
+	}
+	if( *axel->filename == 0 )	/* Index page == no fn		*/
+		strncpy( axel->filename, axel->conf->default_filename, MAX_STRING );
+
 	return( axel );
 }
 
