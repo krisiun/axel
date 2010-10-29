@@ -132,9 +132,12 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 	if( strchr( axel->filename, '*' ) || strchr( axel->filename, '?' ) )
 		strncpy( axel->filename, axel->conn[0].file, MAX_STRING );
 	
-	if( (s = strrchr ( axel->filename, '/' ) ) != NULL  )
+	for(i=0; axel->filename[i]; i++)
 	{
-		strcpy( axel->filename, s+1 );
+		if(axel->filename[i] == '/'
+				|| axel->filename[i] == '\\'
+				|| axel->filename[i] == ':')
+			axel->filename[i] = '_';
 	}
 	if( *axel->filename == 0 )	/* Index page == no fn		*/
 		strncpy( axel->filename, axel->conf->default_filename, MAX_STRING );
