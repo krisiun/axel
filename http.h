@@ -47,6 +47,6 @@ void http_addheader( http_t *conn, char *format, ... );
 int http_exec( http_t *conn );
 char *http_header( http_t *conn, char *header );
 long long int http_size( http_t *conn, char *filename );
-void http_string( char *in, char *out);
+void http_string( char *out, char *in );
 void http_encode( char *s );
 void http_decode( char *s );
