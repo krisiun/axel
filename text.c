@@ -304,15 +304,16 @@ int main( int argc, char *argv[] )
 		sprintf( string, "%s.st", fn );
 		if( access( fn, F_OK ) == 0 ) if( access( string, F_OK ) != 0 )
 		{
-            if(!conf->no_clobber)
-            {
-                fprintf( stderr, _("No state file, cannot resume!\n") );
-                return( 1 );
-            }
-            else
-            {
-                return( 0 );
-            }
+			if( conf->no_clobber )
+			{
+				printf("File %s exists\n", fn );
+				return( 0 );
+			}
+			else
+			{
+				fprintf( stderr, _("No state file, cannot resume!\n") );
+				return( 1 );
+			}
 		}
 		if( access( string, F_OK ) == 0 ) if( access( fn, F_OK ) != 0 )
 		{
@@ -331,10 +332,11 @@ int main( int argc, char *argv[] )
 			sprintf( string, "%s.st", axel->filename );
 			if( access( axel->filename, F_OK ) == 0 )
 			{
-                if( conf->no_clobber )
-                {
-                    return( 0 );
-                }
+				if( conf->no_clobber && access( string, F_OK ) != 0 )
+				{
+					printf("File %s exists\n", axel->filename );
+					return( 0 );
+				}
 				if( axel->conn[0].supported )
 				{
 					if( access( string, F_OK ) == 0 )
