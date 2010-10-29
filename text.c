@@ -30,6 +30,7 @@ static char *size_human( long long int value );
 static char *time_human( int value );
 static void print_commas( long long int bytes_done );
 static void print_alternate_output( axel_t *axel );
+static void print_unicode_output( axel_t *axel );
 static void print_help();
 static void print_version();
 static void print_messages( axel_t *axel );
@@ -52,6 +53,7 @@ static struct option axel_options[] =
 	{ "help",		0,	NULL,	'h' },
 	{ "version",		0,	NULL,	'V' },
 	{ "alternate",		0,	NULL,	'a' },
+	{ "unicode",		0,	NULL,	'u' },
 	{ "header",		1,	NULL,	'H' },
 	{ "user-agent",		1,	NULL,	'U' },
 	{ NULL,			0,	NULL,	0 }
@@ -61,6 +63,20 @@ static struct option axel_options[] =
 /* For returning string values from functions				*/
 static char string[MAX_STRING];
 
+int console_width = 80;
+
+void console_resized(int signal)
+{
+#ifdef TIOCGSIZE
+	struct ttysize ts;
+	ioctl(STDIN_FILENO, TIOCGSIZE, &ts);
+	console_width = ts.ts_cols;
+#elif defined(TIOCGWINSZ)
+	struct winsize ts;
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+	console_width = ts.ws_col;
+#endif /* TIOCGSIZE */
+}
 
 int main( int argc, char *argv[] )
 {
@@ -77,6 +93,8 @@ int main( int argc, char *argv[] )
 	bindtextdomain( PACKAGE, LOCALE );
 	textdomain( PACKAGE );
 #endif
+
+	console_resized(0);
 	
 	if( !conf_init( conf ) )
 	{
@@ -90,7 +108,7 @@ int main( int argc, char *argv[] )
 	{
 		int option;
 		
-		option = getopt_long( argc, argv, "s:n:o:S::NqvhVaH:U:", axel_options, NULL );
+		option = getopt_long( argc, argv, "s:n:o:S::NqvhVauH:U:", axel_options, NULL );
 		if( option == -1 )
 			break;
 		
@@ -129,6 +147,10 @@ int main( int argc, char *argv[] )
 			}
 			break;
 		case 'a':
+			conf->alternate_output = 1;
+			break;
+		case 'u':
+			conf->unicode_output = 1;
 			conf->alternate_output = 1;
 			break;
 		case 'N':
@@ -340,6 +362,7 @@ int main( int argc, char *argv[] )
 	/* Install save_state signal handler for resuming support	*/
 	signal( SIGINT, stop );
 	signal( SIGTERM, stop );
+	signal( SIGWINCH, console_resized );
 	
 	while( !axel->ready && run )
 	{
@@ -351,7 +374,12 @@ int main( int argc, char *argv[] )
 		if( conf->alternate_output )
 		{			
 			if( !axel->message && prev != axel->bytes_done )
-				print_alternate_output( axel );
+			{
+				if(conf->unicode_output)
+					print_unicode_output( axel );
+				else
+					print_alternate_output( axel );
+			}
 		}
 		else
 		{
@@ -388,7 +416,7 @@ int main( int argc, char *argv[] )
 			{
 				/* clreol-simulation */
 				putchar( '\r' );
-				for( i = 0; i < 79; i++ ) /* linewidth known? */
+				for( i = 0; i < console_width; i++ )
 					putchar( ' ' );
 				putchar( '\r' );
 			}
@@ -402,7 +430,12 @@ int main( int argc, char *argv[] )
 				if(conf->alternate_output!=1)
 					print_commas( axel->bytes_done );
 				else
-					print_alternate_output(axel);
+				{
+					if(conf->unicode_output)
+						print_unicode_output(axel);
+					else
+						print_alternate_output(axel);
+				}
 			}
 		}
 		else if( axel->ready )
@@ -486,7 +519,7 @@ static void print_alternate_output(axel_t *axel)
 	long long int total=axel->size;
 	int i,j=0,offset,end;
 	double now = gettime();
-	const int width = 50;
+	const int width = console_width - 30;
 	char progress[width+1];
 
 	for(i=0;i<width;i++)
@@ -533,6 +566,102 @@ static void print_alternate_output(axel_t *axel)
 	fflush( stdout );
 }
 
+static const char *unicode_blocks[11] = {
+	" ", /*space*/
+	"\342\226\217",/*left 1/8 block*/
+	"\342\226\216",
+	"\342\226\215",
+	"\342\226\214", /*left half block*/
+	"\342\226\213",
+	"\342\226\212",
+	"\342\226\211",
+	"\342\226\210", /*full block*/
+	"\342\226\225", /*right 1/8 block*/
+	"\342\226\220"  /*right half block*/
+	/*Curse you unicode for providing only two right blocks!*/
+};
+
+static void print_unicode_output(axel_t *axel) 
+{
+	long long int done=axel->bytes_done;
+	long long int total=axel->size;
+	int i,j=0;
+	double now = gettime();
+	
+	int width = console_width - 30;
+	long long int missing[width];
+	long long int blocksize[width];
+	char hasleft[width];
+	int pos = 0;
+	
+	if(total <= 8*width)
+		return;
+
+	for(i=1;i<=width;i++)
+	{
+		long long int next = i*total/width;
+		blocksize[i-1] = next - pos;
+		missing[i-1] = 0;
+		hasleft[i-1] = 1;
+		pos = next;
+	}
+	
+	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
+	
+	for(i=0;i<axel->conf->num_connections;i++)
+	{
+		int b1 = axel->conn[i].currentbyte * width / total;
+		int b2 = axel->conn[i].lastbyte * width / total;
+
+		for(j=b1; j<=b2; j++)
+			missing[j] = blocksize[j];
+		
+		missing[b1] -= axel->conn[i].currentbyte - b1 * total / width;
+		missing[b2] -= (b2+1) * total / width - 1 - axel->conn[i].lastbyte;
+		if(b1 < b2)
+		{
+			hasleft[b2] = 0;
+		}
+	}
+
+	for(i=0; i<width; i++)
+	{
+		long long int complete = blocksize[i] - missing[i];
+		if(hasleft[i] || complete == blocksize[i] || complete == 0)
+		{
+			printf("%s", unicode_blocks[(7*complete + blocksize[i]-2)/(blocksize[i]-1)]);
+		}
+		else
+		{
+			printf("%s", unicode_blocks[ 9 + (complete*2 >= blocksize[i]) ]);
+		}
+	}
+
+	if(axel->bytes_per_second > 1048576)
+		printf( "] [%6.1fMB/s]", (double) axel->bytes_per_second / (1024*1024) );
+	else if(axel->bytes_per_second > 1024)
+		printf( "] [%6.1fKB/s]", (double) axel->bytes_per_second / 1024 );
+	else
+		printf( "] [%6.1fB/s]", (double) axel->bytes_per_second );
+	
+	if(done<total)
+	{
+		int seconds,minutes,hours,days;
+		seconds=axel->finish_time - now;
+		minutes=seconds/60;seconds-=minutes*60;
+		hours=minutes/60;minutes-=hours*60;
+		days=hours/24;hours-=days*24;
+		if(days)
+			printf(" [%2dd%2d]",days,hours);
+		else if(hours)
+			printf(" [%2dh%02d]",hours,minutes);
+		else
+			printf(" [%02d:%02d]",minutes,seconds);
+	}
+
+	fflush( stdout );
+}
+
 void print_help()
 {
 #ifdef NOGETOPTLONG
@@ -548,6 +677,7 @@ void print_help()
 		"-q\tLeave stdout alone\n"
 		"-v\tMore status information\n"
 		"-a\tAlternate progress indicator\n"
+		"-u\tUnicode progress indicator\n"
 		"-h\tThis information\n"
 		"-V\tVersion information\n"
 		"\n"
@@ -565,6 +695,7 @@ void print_help()
 		"--quiet\t\t\t-q\tLeave stdout alone\n"
 		"--verbose\t\t-v\tMore status information\n"
 		"--alternate\t\t-a\tAlternate progress indicator\n"
+		"--unicode\t\t-u\tUnicode progress indicator\n"
 		"--help\t\t\t-h\tThis information\n"
 		"--version\t\t-V\tVersion information\n"
 		"\n"
