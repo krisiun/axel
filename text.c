@@ -591,13 +591,13 @@ static void print_unicode_output(axel_t *axel)
 	long long int total=axel->size;
 	int i,j=0;
 	double now = gettime();
-	
+
 	int width = console_width - 30;
 	long long int missing[width];
 	long long int blocksize[width];
 	char hasleft[width];
-	int pos = 0;
-	
+	long long int pos = 0;
+
 	if(total <= 8*width)
 		return;
 
@@ -609,16 +609,16 @@ static void print_unicode_output(axel_t *axel)
 		hasleft[i-1] = 1;
 		pos = next;
 	}
-	
+
 	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
-	
+
 	for(i=0;i<axel->conf->num_connections;i++)
 	{
 		int b1 = axel->conn[i].currentbyte * width / total;
 		int b2 = axel->conn[i].lastbyte * width / total;
 
 		for(j=b1; j<=b2; j++)
-			missing[j] = blocksize[j];
+			missing[j] += blocksize[j];
 		
 		missing[b1] -= axel->conn[i].currentbyte - b1 * total / width;
 		missing[b2] -= (b2+1) * total / width - 1 - axel->conn[i].lastbyte;
@@ -647,7 +647,7 @@ static void print_unicode_output(axel_t *axel)
 		printf( "] [%6.1fKB/s]", (double) axel->bytes_per_second / 1024 );
 	else
 		printf( "] [%6.1fB/s]", (double) axel->bytes_per_second );
-	
+
 	if(done<total)
 	{
 		int seconds,minutes,hours,days;
