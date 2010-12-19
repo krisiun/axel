@@ -207,11 +207,11 @@ long long int http_size( http_t *conn, char *filename )
 	
 	if( ( i = http_header( conn, "Content-Disposition:" ) ) != NULL )
 	{
-		for( ;*i && *i != '\n'; i++)
+		for(; *i && *i != '\n'; i++)
 		{
 			if(!strncasecmp("filename=", i, 9))
 			{
-				http_string(i+9, filename);
+				http_string(filename, i+9);
 				break;
 			}
 		}
@@ -220,19 +220,29 @@ long long int http_size( http_t *conn, char *filename )
 }
 
 /* copy a value of http string */
-void http_string(char *in, char *out)
+void http_string(char *out, char *in)
 {
+	int i;
 	if(*in == '"')
 	{
-		strncpy(out, in+1, MAX_STRING);
-		for( ;*out && *out != '"' && *out != '\r' && *out != '\n'; out++);
+		in++;
+		for(i=0; i<MAX_STRING-1; i++)
+		{
+			if(!in[i] || in[i] == '"' || in[i] == '\r' || in[i] == '\n')
+				break;
+			out[i] = in[i];
+		}
 	}
 	else
 	{
-		strncpy(out, in, MAX_STRING);
-		for( ;*out && !isspace(*out) && *out != ';'; out++);
+		for(i=0; i<MAX_STRING-1; i++)
+		{
+			if(!in[i] || isspace(in[i]) || in[i] == ';')
+				break;
+			out[i] = in[i];
+		}
 	}
-	*out = 0;
+	out[i] = 0;
 }
 
 /* Decode%20a%20file%20name						*/
