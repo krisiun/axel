@@ -1,5 +1,12 @@
 New functionality is implemented in different branches.
 
+## Branch: master
+
+Contains original axel, except for couple modications:
+
+* MAX_REDIR is set to 25, since there are plenty of URLs which will be redirected more than 5 times.
+* Length of allowed redirect url increased from 255 to 1000. (Youtube download was not working).
+
 ## Branch: unicode-progressbar
 
 Displays awesome progress bar using unicode characters. If your console does not support unicode, don't turn it on.
@@ -26,13 +33,23 @@ It is not a good idea to read cookies from sqlite file, since firefox does not w
 
 * [http://github.com/emiraga/flashgot](http://github.com/emiraga/flashgot)
 
-## Planned branch: content-disposition
+## Branch: content-disposition
 
-Recognize `Content-disposition` in HTTP headers.
+Recognize `Content-disposition` in HTTP headers, and save with appropriate filename.
+
+* There are no new config file or argument options.
 
 ## Planned branch: multi-url-arguments
 
 Give multiple files (not mirrors) on command line.
+
+## Planned branch: https
+
+Not sure about this one.
+
+## Branches: releaseX
+
+These branches are used to merge several features together. I will consider merging only semi-stable features.
 
 # Extra notes
 
