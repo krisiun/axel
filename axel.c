@@ -330,7 +330,7 @@ void axel_do( axel_t *axel )
 {
 	fd_set fds[1];
 	int hifd, i;
-	long long int remaining,size;
+	long long int remaining,size,wsize;
 	struct timeval timeval[1];
 	
 	/* Create statefile if necessary				*/
@@ -363,8 +363,11 @@ void axel_do( axel_t *axel )
 		   by a signal, or that something else's very wrong...	*/
 		if( select( hifd + 1, fds, NULL, NULL, timeval ) == -1 )
 		{
-			axel->ready = -1;
-			return;
+			if(errno != EINTR)
+			{
+				axel->ready = -1;
+				return;
+			}
 		}
 	}
 	
@@ -374,7 +377,12 @@ void axel_do( axel_t *axel )
 	if( FD_ISSET( axel->conn[i].fd, fds ) )
 	{
 		axel->conn[i].last_transfer = gettime();
-		size = read( axel->conn[i].fd, buffer, axel->conf->buffer_size );
+		do
+		{
+			size = read( axel->conn[i].fd, buffer, axel->conf->buffer_size );
+		}
+		while(size == -1 && errno == EINTR); /* call was interupted by a signal */
+
 		if( size == -1 )
 		{
 			if( axel->conf->verbose )
@@ -425,9 +433,14 @@ void axel_do( axel_t *axel )
 		}
 		/* This should always succeed..				*/
 		lseek( axel->outfd, axel->conn[i].currentbyte, SEEK_SET );
-		if( write( axel->outfd, buffer, size ) != size )
+		do
 		{
-			
+			wsize = write( axel->outfd, buffer, size );
+		}
+		while(wsize == -1 && errno == EINTR); /* call was interupted by a signal */
+
+		if(wsize != size)
+		{
 			axel_message( axel, _("Write error!") );
 			axel->ready = -1;
 			return;
