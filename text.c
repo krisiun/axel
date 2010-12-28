@@ -79,6 +79,10 @@ void console_resized(int signal)
 	if(ts.ws_col > 1)
 		console_width = ts.ws_col;
 #endif /* TIOCGSIZE */
+
+#ifdef DEBUG
+	fprintf( stderr, "Console width is %d\n", console_width);
+#endif
 }
 
 int main( int argc, char *argv[] )
