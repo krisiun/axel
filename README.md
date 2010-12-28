@@ -13,6 +13,7 @@ Displays awesome progress bar using unicode characters. If your console does not
 
 * New command-line argument `-u` or `--unicode` that switches to unicode output.
 * New config file option `unicode_output = 1`
+* Detects width of the console/terminal.
 
 ## Branch: reactivation
 
@@ -29,9 +30,10 @@ Skip files that are already downloaded (don't clobber from `wget`).
 
 ## Firefox cookies
 
-It is not a good idea to read cookies from sqlite file, since firefox does not write all cookies to the disk. Instead there is a flashgot extension for firefox that integrates it with various download managers. I plan to modify flashgot to include better support for axel.
-
-* [http://github.com/emiraga/flashgot](http://github.com/emiraga/flashgot)
+It is not a good idea to read cookies from sqlite file, since firefox does not
+write **all** cookies to the disk. Instead there is a flashgot extension for
+firefox that integrates it with various download managers. **Flashgot 1.2.8** and newer has a better support for axel.
+[Forum thread](http://forums.informaction.com/viewtopic.php?f=11&t=5543).
 
 ## Branch: content-disposition
 
@@ -39,13 +41,9 @@ Recognize `Content-disposition` in HTTP headers, and save with appropriate filen
 
 * There are no new config file or argument options.
 
-## Planned branch: multi-url-arguments
-
-Give multiple files (not mirrors) on command line.
-
 ## Planned branch: https
 
-Not sure about this one.
+In progress.
 
 ## Branches: releaseX
 
