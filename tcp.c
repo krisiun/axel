@@ -31,7 +31,7 @@ int tcp_connect( char *hostname, int port, char *local_if )
 	struct hostent *host = NULL;
 	struct sockaddr_in addr;
 	struct sockaddr_in local;
-	int fd;
+	int fd, status;
 
 #ifdef DEBUG
 	socklen_t i = sizeof( local );
@@ -69,7 +69,13 @@ int tcp_connect( char *hostname, int port, char *local_if )
 	addr.sin_port = htons( port );
 	addr.sin_addr = *( (struct in_addr *) host->h_addr );
 	
-	if( connect( fd, (struct sockaddr *) &addr, sizeof( struct sockaddr_in ) ) == -1 )
+	do
+	{
+		status = connect( fd, (struct sockaddr *) &addr, sizeof( struct sockaddr_in ) );
+	}
+	while(status == -1 && errno == EINTR); /* call was interupted by a signal */
+
+	if( status == -1 )
 	{
 		close( fd );
 		return( -1 );
