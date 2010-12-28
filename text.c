@@ -94,6 +94,7 @@ int main( int argc, char *argv[] )
 	axel_t *axel;
 	int i, j, cur_head = 0;
 	char *s;
+	struct sigaction sa;
 	
 #ifdef I18N
 	setlocale( LC_ALL, "" );
@@ -101,6 +102,7 @@ int main( int argc, char *argv[] )
 	textdomain( PACKAGE );
 #endif
 
+	/* Load initial size of a terminal */
 	console_resized(0);
 	
 	if( !conf_init( conf ) )
@@ -385,7 +387,16 @@ int main( int argc, char *argv[] )
 	/* Install save_state signal handler for resuming support	*/
 	signal( SIGINT, stop );
 	signal( SIGTERM, stop );
-	signal( SIGWINCH, console_resized );
+
+	/* Monitor change of the terminal width, after SIGWINCH signal
+	 * system calls will be restarted if possible */
+	sa.sa_handler = console_resized;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	if (sigaction(SIGWINCH, &sa, NULL) == -1) {
+		print_messages( axel );
+		return( 1 );
+	}
 	
 	while( !axel->ready && run )
 	{
