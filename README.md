@@ -1,4 +1,4 @@
-New functionality is implemented in different branches.
+This file only shows new features added since version 2.4, original README is still available.
 
 ## Branch: master
 
@@ -43,19 +43,19 @@ Recognize `Content-disposition` in HTTP headers, and save with appropriate filen
 
 ## Planned branch: https
 
-In progress.
 
 ## Branches: releaseX
 
-These branches are used to merge several features together. I will consider merging only semi-stable features.
+These branches are used to merge several features together for testing. I will consider merging only semi-stable features. This branch may not always contain latest version of features (merging is done periodically).
 
 # Extra notes
 
-I test my code only using HTTP connections on linux. Sorry, for potential incompatibilities, all fixes are welcome.
+Testing is done on:
+* Ubuntu 10.10 GNU/Linux
+* FreeBSD 7.1 (thanks to bagside/bagvapp)
+* SunOS 5.11 2008.5 (thanks to bagside/bagvapp)
 
-Original README and CHANGELOG were not modified.
-
-Also, license from axel is unchanged.
+Original README, CHANGELOG and license were not modified.
 
 ## Contact
 
