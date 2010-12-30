@@ -51,9 +51,12 @@ These branches are used to merge several features together for testing. I will c
 # Extra notes
 
 Testing is done on:
+
 * Ubuntu 10.10 GNU/Linux
 * FreeBSD 7.1 (thanks to bagside/bagvapp)
-* SunOS 5.11 2008.5 (thanks to bagside/bagvapp)
+* OpenSolaris 2008.5 SunOS 5.11 (thanks to bagside/bagvapp)
+* OpenBSD 3.8 (thanks to [Will Backman](http://cisx1.uma.maine.edu/~wbackman/vmware-images/))
+* NetBSD (thanks to [Philip A. Nelson](http://cs.wwu.edu/faculty/phil/classes/vm-ldc.cd/))
 
 Original README, CHANGELOG and license were not modified.
 
