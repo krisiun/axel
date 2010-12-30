@@ -20,7 +20,7 @@ strip=1
 arch=`uname -s`
 
 while [ -n "$1" ]; do
-	e="`expr "$1" : '--\(.*=.*\)'`"
+	e="`expr "X$1" : 'X--\(.*=.*\)'`"
 	if [ -z "$e" ]; then
 		cat<<EOF
 Axel configure
