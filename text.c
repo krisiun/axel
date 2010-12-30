@@ -68,20 +68,37 @@ int console_width = 80;
 
 void console_resized(int signal)
 {
+	char *envColumns;
+	int columns;
 #ifdef TIOCGSIZE
-	struct ttysize ts;
-	ioctl(STDIN_FILENO, TIOCGSIZE, &ts);
-	if(ts.ts_cols > 1)
+	struct ttysize ts = {0};
+#elif defined(TIOCGWINSZ)
+	struct winsize ts = {0};
+#elif defined(WIOCGETD)
+	struct uwdata ts = {0};
+#endif
+
+	if (!isatty(STDIN_FILENO))
+		return;
+
+	/* First try the env variables, later overridden by ioctl(...) */
+	envColumns = getenv("COLUMNS");
+	if (envColumns != NULL && (columns = atoi(envColumns)) > 0)
+		console_width = columns;
+
+#ifdef TIOCGSIZE
+	if(ioctl(STDIN_FILENO, TIOCGSIZE, &ts)!=-1 && ts.ts_cols > 1)
 		console_width = ts.ts_cols;
 #elif defined(TIOCGWINSZ)
-	struct winsize ts;
-	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
-	if(ts.ws_col > 1)
+	if(ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) != -1 && ts.ws_col > 1)
 		console_width = ts.ws_col;
-#endif /* TIOCGSIZE */
+#elif defined(WIOCGETD)
+	if(ioctl(STDIN_FILENO, WIOCGETD, &ts) != -1 && ts.uw_width > 0)
+		console_width = (int) (ts.uw_width / ts.uw_hs);
+#endif
 
 #ifdef DEBUG
-	fprintf( stderr, "Console width is %d\n", console_width);
+	fprintf( stderr, "\nConsole width is %d\n", console_width);
 #endif
 }
 
