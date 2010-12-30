@@ -52,7 +52,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <pthread.h>
-#include <sgtty.h>
+#include <termios.h>
 
 /* Internationalization							*/
 #ifdef I18N
