@@ -666,7 +666,7 @@ static void print_unicode_output(axel_t *axel)
 
 	for(i=0; i<width; i++)
 	{
-		long long int complete = blocksize[i] - missing[i];
+		long long int complete = blocksize[i] - max(0, missing[i]);
 		if(hasleft[i] || complete == blocksize[i] || complete == 0)
 		{
 			printf("%s", unicode_blocks[(7*complete + blocksize[i]-2)/(blocksize[i]-1)]);
