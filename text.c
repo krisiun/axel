@@ -410,7 +410,8 @@ int main( int argc, char *argv[] )
 	sa.sa_handler = console_resized;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
-	if (sigaction(SIGWINCH, &sa, NULL) == -1) {
+	if (sigaction(SIGWINCH, &sa, NULL) == -1)
+	{
 		print_messages( axel );
 		return( 1 );
 	}
@@ -659,25 +660,28 @@ static void print_unicode_output(axel_t *axel)
 
 	printf("\r[%3ld%%] [", min(100,(long)(done*100./total+.5) ) );
 
-	for(i=0;i<axel->conf->num_connections;i++)
+	if(width>0)
 	{
-		int b1 = axel->conn[i].currentbyte * width / total;
-		int b2 = axel->conn[i].lastbyte * width / total;
-
-		for(j=b1; j<=b2; j++)
-			missing[j] += blocksize[j];
-		
-		missing[b1] -= axel->conn[i].currentbyte - b1 * total / width;
-		missing[b2] -= (b2+1) * total / width - 1 - axel->conn[i].lastbyte;
-		if(b1 < b2)
+		for(i=0;i<axel->conf->num_connections;i++)
 		{
-			hasleft[b2] = 0;
+			int b1 = axel->conn[i].currentbyte * width / total;
+			int b2 = axel->conn[i].lastbyte * width / total;
+
+			for(j=b1; j<=b2; j++)
+				missing[j] += blocksize[j];
+			
+			missing[b1] -= axel->conn[i].currentbyte - b1 * total / width;
+			missing[b2] -= (b2+1) * total / width - 1 - axel->conn[i].lastbyte;
+			if(b1 < b2)
+			{
+				hasleft[b2] = 0;
+			}
 		}
 	}
 
 	for(i=0; i<width; i++)
 	{
-		long long int complete = blocksize[i] - missing[i];
+		long long int complete = blocksize[i] - max(0, missing[i]);
 		if(hasleft[i] || complete == blocksize[i] || complete == 0)
 		{
 			printf("%s", unicode_blocks[(7*complete + blocksize[i]-2)/(blocksize[i]-1)]);
