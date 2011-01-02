@@ -1,4 +1,4 @@
-New functionality is implemented in different branches.
+This file only shows new features added since version 2.4, original README is still available.
 
 ## Branch: master
 
@@ -13,6 +13,7 @@ Displays awesome progress bar using unicode characters. If your console does not
 
 * New command-line argument `-u` or `--unicode` that switches to unicode output.
 * New config file option `unicode_output = 1`
+* Detects width of the console/terminal.
 
 ## Branch: reactivation
 
@@ -29,9 +30,10 @@ Skip files that are already downloaded (don't clobber from `wget`).
 
 ## Firefox cookies
 
-It is not a good idea to read cookies from sqlite file, since firefox does not write all cookies to the disk. Instead there is a flashgot extension for firefox that integrates it with various download managers. I plan to modify flashgot to include better support for axel.
-
-* [http://github.com/emiraga/flashgot](http://github.com/emiraga/flashgot)
+It is not a good idea to read cookies from sqlite file, since firefox does not
+write **all** cookies to the disk. Instead there is a flashgot extension for
+firefox that integrates it with various download managers. **Flashgot 1.2.8** and newer has a better support for axel.
+[Forum thread](http://forums.informaction.com/viewtopic.php?f=11&t=5543).
 
 ## Branch: content-disposition
 
@@ -39,25 +41,24 @@ Recognize `Content-disposition` in HTTP headers, and save with appropriate filen
 
 * There are no new config file or argument options.
 
-## Planned branch: multi-url-arguments
-
-Give multiple files (not mirrors) on command line.
-
 ## Planned branch: https
 
-Not sure about this one.
 
 ## Branches: releaseX
 
-These branches are used to merge several features together. I will consider merging only semi-stable features.
+These branches are used to merge several features together for testing. I will consider merging only semi-stable features. This branch may not always contain latest version of features (merging is done periodically).
 
 # Extra notes
 
-I test my code only using HTTP connections on linux. Sorry, for potential incompatibilities, all fixes are welcome.
+Testing is done on:
 
-Original README and CHANGELOG were not modified.
+* Ubuntu 10.10 GNU/Linux
+* FreeBSD 7.1 (thanks to bagside/bagvapp)
+* OpenSolaris 2008.5 SunOS 5.11 (thanks to bagside/bagvapp)
+* OpenBSD 3.8 (thanks to [Will Backman](http://cisx1.uma.maine.edu/~wbackman/vmware-images/))
+* NetBSD (thanks to [Philip A. Nelson](http://cs.wwu.edu/faculty/phil/classes/vm-ldc.cd/))
 
-Also, license from axel is unchanged.
+Original README, CHANGELOG and license were not modified.
 
 ## Contact
 

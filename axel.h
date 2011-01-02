@@ -90,6 +90,10 @@ typedef message_t if_t;
 #define min( a, b )		( (a) < (b) ? (a) : (b) )
 #define max( a, b )		( (a) > (b) ? (a) : (b) )
 
+#ifndef LLONG_MAX
+#define LLONG_MAX    9223372036854775807LL
+#endif
+
 typedef struct
 {
 	conn_t *conn;

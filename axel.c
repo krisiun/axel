@@ -122,7 +122,7 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 	
 	s = conn_url( axel->conn );
 	strncpy( axel->url->text, s, MAX_STRING );
-	if( ( axel->size = axel->conn[0].size ) != INT_MAX )
+	if( ( axel->size = axel->conn[0].size ) != LLONG_MAX )
 	{
 		if( axel->conf->verbose > 0 )
 			axel_message( axel, _("File size: %lld bytes"), axel->size );
@@ -399,7 +399,7 @@ void axel_do( axel_t *axel )
 			if( axel->conf->verbose )
 			{
 				/* Only abnormal behaviour if:		*/
-				if( axel->conn[i].currentbyte < axel->conn[i].lastbyte && axel->size != INT_MAX )
+				if( axel->conn[i].currentbyte < axel->conn[i].lastbyte && axel->size != LLONG_MAX )
 				{
 					axel_message( axel, _("Connection %i unexpectedly closed"), i );
 				}
