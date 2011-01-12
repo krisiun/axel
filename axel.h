@@ -90,7 +90,7 @@ typedef message_t if_t;
 #define max( a, b )		( (a) > (b) ? (a) : (b) )
 
 #ifndef LLONG_MAX
-#define LLONG_MAX    9223372036854775807LL
+#define LLONG_MAX ((~0ULL) >> 1)
 #endif
 
 typedef struct
