@@ -329,8 +329,8 @@ void axel_start( axel_t *axel )
 void axel_do( axel_t *axel )
 {
 	fd_set fds[1];
-	int hifd, i;
-	long long int remaining,size,wsize;
+	int hifd, i, status;
+	long long int remaining, size, wsize;
 	struct timeval timeval[1];
 	
 	/* Create statefile if necessary				*/
@@ -361,13 +361,16 @@ void axel_do( axel_t *axel )
 		timeval->tv_usec = 100000;
 		/* A select() error probably means it was interrupted
 		   by a signal, or that something else's very wrong...	*/
-		if( select( hifd + 1, fds, NULL, NULL, timeval ) == -1 )
+		do
 		{
-			if(errno != EINTR)
-			{
-				axel->ready = -1;
-				return;
-			}
+			status = select( hifd + 1, fds, NULL, NULL, timeval );
+		}
+		while(status == -1 && errno == EINTR);
+
+		if(status == -1)
+		{
+			axel->ready = -1;
+			return;
 		}
 	}
 	
